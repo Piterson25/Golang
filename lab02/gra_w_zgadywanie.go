@@ -1,16 +1,54 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"math/rand"
+	"os"
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type score struct {
+	tries int
 	name  string
-	tries uint
+	date  string
+	guess int
+}
+
+func nameExist(name string, gameScores []score) bool {
+	for _, s := range gameScores {
+		if s.name == name {
+			return true
+		}
+	}
+	return false
+}
+
+func bestScore(newScore score, gameScores []score) bool {
+	for _, s := range gameScores {
+		if s.tries < newScore.tries {
+			return false
+		}
+	}
+	return true
+}
+
+func replaceScore(newScore score, gameScores []score) {
+	for _, s := range gameScores {
+		if s.name == newScore.name && s.tries > newScore.tries {
+			s = newScore
+
+			if bestScore(newScore, gameScores) {
+				fmt.Println("Pobiles rekord globalny!")
+			} else {
+				fmt.Println("Pobiles swoj rekord osobisty!")
+			}
+			break
+		}
+	}
 }
 
 func game(gameScores *[]score) bool {
@@ -18,7 +56,7 @@ func game(gameScores *[]score) bool {
 
 	number := rand.Intn(101)
 
-	var proby uint
+	var proby int
 
 	for {
 		fmt.Print("Podaj liczbę: ")
@@ -45,9 +83,13 @@ func game(gameScores *[]score) bool {
 	fmt.Print("Podaj swoję imię: ")
 	fmt.Scan(&imie)
 
-	game_score := score{name: imie, tries: proby}
+	game_score := score{tries: proby, name: imie, date: time.Now().Format("01-02-2006"), guess: number}
 
-	*gameScores = append(*gameScores, game_score)
+	if !nameExist(imie, *gameScores) {
+		*gameScores = append(*gameScores, game_score)
+	} else {
+		replaceScore(game_score, *gameScores)
+	}
 
 	return false
 }
@@ -62,6 +104,43 @@ func main() {
 	var answer string
 
 	gameScores := []score{}
+
+	file, err := os.Open("hall_of_fame.txt")
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	scanner := bufio.NewScanner(file)
+	scanner.Split(bufio.ScanWords)
+
+	i := 0
+	readScore := score{}
+	for scanner.Scan() {
+
+		switch i {
+		case 0:
+			text, _ := strconv.Atoi(scanner.Text())
+			readScore.tries = text
+		case 1:
+			readScore.name = scanner.Text()
+		case 2:
+			readScore.date = scanner.Text()
+		case 3:
+			text, _ := strconv.Atoi(scanner.Text())
+			readScore.guess = text
+			gameScores = append(gameScores, readScore)
+		}
+		if i == 3 {
+			i = 0
+		} else {
+			i++
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		fmt.Println(err)
+	}
 
 	for {
 		if game(&gameScores) {
@@ -83,7 +162,11 @@ func main() {
 	})
 
 	for _, s := range gameScores {
-		fmt.Println(s.name, s.tries)
+		f := fmt.Sprintf("%d %s %s %d\n", s.tries, s.name, s.date, s.guess)
+		file.WriteString(f)
+		fmt.Println(s.tries, s.name, s.date, s.guess)
 	}
+
+	file.Close()
 
 }
