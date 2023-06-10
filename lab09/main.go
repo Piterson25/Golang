@@ -11,12 +11,12 @@ import (
 
 const (
 	WindowTitle      = "ANTS"
-	FPS              = 10
+	FPS              = 1000
 	WindowTitleDelay = time.Second / FPS
 )
 
 func main() {
-	width, height := parseArguments(os.Args)
+	width, height, X := parseArguments(os.Args)
 
 	if err := sdl.Init(sdl.INIT_EVERYTHING); err != nil {
 		fmt.Fprintf(os.Stderr, "Error in loading SDL2: %s\n", err)
@@ -38,7 +38,9 @@ func main() {
 	}
 	defer renderer.Destroy()
 
-	Ant := ant.NewAnt(renderer, int32(width), int32(height), 10)
+	am := ant.NewManager()
+
+	am.AddAnts(renderer, width, height, X)
 
 	fpsTicker := time.NewTicker(WindowTitleDelay)
 	defer fpsTicker.Stop()
@@ -60,23 +62,17 @@ func main() {
 		renderer.SetDrawColor(0, 0, 0, 255)
 		renderer.Clear()
 
-		Ant.Update()
-		Ant.Render()
-
-		renderer.Present()
-
-		if Ant.HitEdge() {
-			running = false
-		}
+		am.Update()
 
 		time.Sleep(WindowTitleDelay)
 	}
 
 }
 
-func parseArguments(args []string) (int, int) {
+func parseArguments(args []string) (int, int, int) {
 	width := 800
 	height := 600
+	X := 1
 
 	for i := 1; i < len(args); i++ {
 		arg := args[i]
@@ -88,10 +84,14 @@ func parseArguments(args []string) (int, int) {
 			if h, err := parseInt(args[i+1]); err == nil {
 				height = h
 			}
+		} else if arg == "-count" && i+1 < len(args) {
+			if x, err := parseInt(args[i+1]); err == nil {
+				X = x
+			}
 		}
 	}
 
-	return width, height
+	return width, height, X
 }
 
 func parseInt(str string) (int, error) {

@@ -12,7 +12,6 @@ type Ant struct {
 	windowWidth  int32
 	windowHeight int32
 	gridSize     int32
-	visitedGrid  map[point]sdl.Color
 	direction    int
 }
 
@@ -29,7 +28,6 @@ func NewAnt(renderer *sdl.Renderer, windowWidth, windowHeight, gridSize int32) *
 		windowWidth:  windowWidth,
 		windowHeight: windowHeight,
 		gridSize:     gridSize,
-		visitedGrid:  make(map[point]sdl.Color),
 		direction:    0,
 	}
 }
@@ -55,20 +53,10 @@ func (a *Ant) Update() {
 	a.pointX += dx
 	a.pointY += dy
 
-	a.markVisited(a.pointX, a.pointY, a.direction)
+	a.checkWalls()
 }
 
 func (a *Ant) Render() {
-	for p, color := range a.visitedGrid {
-		a.renderer.SetDrawColor(color.R, color.G, color.B, color.A)
-		rect := sdl.Rect{
-			X: p.x,
-			Y: p.y,
-			W: a.gridSize,
-			H: a.gridSize,
-		}
-		a.renderer.FillRect(&rect)
-	}
 
 	a.renderer.SetDrawColor(255, 255, 255, 255)
 	rect := sdl.Rect{
@@ -82,7 +70,7 @@ func (a *Ant) Render() {
 	a.renderer.Present()
 }
 
-func (a *Ant) markVisited(x, y int32, direction int) {
+func (a *Ant) markVisited(x, y int32, direction int) (point, sdl.Color) {
 	color := sdl.Color{}
 	switch direction {
 	case 0:
@@ -95,13 +83,21 @@ func (a *Ant) markVisited(x, y int32, direction int) {
 		color = sdl.Color{0, 0, 255, 255} // Niebieski
 	}
 
-	p := point{x, y}
-	a.visitedGrid[p] = color
+	return point{x, y}, color
+
 }
 
-func (a *Ant) HitEdge() bool {
-	if a.pointX <= 0 || a.pointX >= a.windowWidth-a.gridSize || a.pointY <= 0 || a.pointY >= a.windowHeight-a.gridSize {
-		return true
+func (a *Ant) checkWalls() {
+
+	if a.pointX < 0 {
+		a.pointX = a.windowWidth - a.gridSize
+	} else if a.pointX > a.windowWidth-a.gridSize {
+		a.pointX = 0
 	}
-	return false
+
+	if a.pointY < 0 {
+		a.pointY = a.windowHeight - a.gridSize
+	} else if a.pointY > a.windowHeight-a.gridSize {
+		a.pointY = 0
+	}
 }
