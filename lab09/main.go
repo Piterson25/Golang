@@ -2,26 +2,46 @@ package main
 
 import (
 	"fmt"
+	"lab09/ant"
 	"os"
+	"time"
 
 	"github.com/veandco/go-sdl2/sdl"
+)
+
+const (
+	WindowTitle      = "ANTS"
+	FPS              = 10
+	WindowTitleDelay = time.Second / FPS
 )
 
 func main() {
 	width, height := parseArguments(os.Args)
 
 	if err := sdl.Init(sdl.INIT_EVERYTHING); err != nil {
-		fmt.Fprintf(os.Stderr, "Nie udalo sie zaladowac SDL2: %s\n", err)
+		fmt.Fprintf(os.Stderr, "Error in loading SDL2: %s\n", err)
 		return
 	}
 	defer sdl.Quit()
 
-	window, err := sdl.CreateWindow("MRUFKI", sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED, int32(width), int32(height), sdl.WINDOW_SHOWN)
+	window, err := sdl.CreateWindow(WindowTitle, sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED, int32(width), int32(height), sdl.WINDOW_SHOWN)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Blad w tworzeniu okna: %s\n", err)
+		fmt.Fprintf(os.Stderr, "Error in creating window: %s\n", err)
 		return
 	}
 	defer window.Destroy()
+
+	renderer, err := sdl.CreateRenderer(window, -1, sdl.RENDERER_ACCELERATED)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Nie można utworzyć renderera: %s\n", err)
+		return
+	}
+	defer renderer.Destroy()
+
+	Ant := ant.NewAnt(renderer, int32(width), int32(height), 10)
+
+	fpsTicker := time.NewTicker(WindowTitleDelay)
+	defer fpsTicker.Stop()
 
 	running := true
 	for running {
@@ -36,6 +56,20 @@ func main() {
 				}
 			}
 		}
+
+		renderer.SetDrawColor(0, 0, 0, 255)
+		renderer.Clear()
+
+		Ant.Update()
+		Ant.Render()
+
+		renderer.Present()
+
+		if Ant.HitEdge() {
+			running = false
+		}
+
+		time.Sleep(WindowTitleDelay)
 	}
 
 }
