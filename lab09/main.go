@@ -15,6 +15,23 @@ const (
 	WindowTitleDelay = time.Second / FPS
 )
 
+func pollEvents() bool {
+	running := true
+	for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
+		switch event.(type) {
+		case *sdl.QuitEvent:
+			running = false
+		case *sdl.KeyboardEvent:
+			keyEvent := event.(*sdl.KeyboardEvent)
+			if keyEvent.Keysym.Sym == sdl.K_q && keyEvent.State == sdl.PRESSED {
+				running = false
+			}
+		}
+	}
+
+	return running
+}
+
 func main() {
 	width, height, X := parseArguments(os.Args)
 
@@ -38,31 +55,23 @@ func main() {
 	}
 	defer renderer.Destroy()
 
-	am := ant.NewManager()
+	antsManager := ant.NewManager()
 
-	am.AddAnts(renderer, width, height, X)
+	antsManager.AddAnts(renderer, width, height, X)
 
 	fpsTicker := time.NewTicker(WindowTitleDelay)
 	defer fpsTicker.Stop()
 
 	running := true
 	for running {
-		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
-			switch event.(type) {
-			case *sdl.QuitEvent:
-				running = false
-			case *sdl.KeyboardEvent:
-				keyEvent := event.(*sdl.KeyboardEvent)
-				if keyEvent.Keysym.Sym == sdl.K_q && keyEvent.State == sdl.PRESSED {
-					running = false
-				}
-			}
-		}
+
+		running = pollEvents()
 
 		renderer.SetDrawColor(0, 0, 0, 255)
 		renderer.Clear()
 
-		am.Update()
+		antsManager.Update()
+		antsManager.Render()
 
 		time.Sleep(WindowTitleDelay)
 	}
@@ -76,19 +85,23 @@ func parseArguments(args []string) (int, int, int) {
 
 	for i := 1; i < len(args); i++ {
 		arg := args[i]
-		if arg == "-w" && i+1 < len(args) {
-			if w, err := parseInt(args[i+1]); err == nil {
-				width = w
-			}
-		} else if arg == "-h" && i+1 < len(args) {
-			if h, err := parseInt(args[i+1]); err == nil {
-				height = h
-			}
-		} else if arg == "-count" && i+1 < len(args) {
-			if x, err := parseInt(args[i+1]); err == nil {
-				X = x
+
+		if i+1 < len(args) {
+			if arg == "-w" {
+				if w, err := parseInt(args[i+1]); err == nil {
+					width = w
+				}
+			} else if arg == "-h" {
+				if h, err := parseInt(args[i+1]); err == nil {
+					height = h
+				}
+			} else if arg == "-count" {
+				if x, err := parseInt(args[i+1]); err == nil {
+					X = x
+				}
 			}
 		}
+
 	}
 
 	return width, height, X

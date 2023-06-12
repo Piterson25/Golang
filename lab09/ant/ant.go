@@ -36,7 +36,16 @@ func (a *Ant) Update() {
 	dx := int32(0)
 	dy := int32(0)
 
-	direction := rand.Intn(4)
+	checkGoing := rand.Intn(5)
+
+	direction := 0
+
+	if checkGoing == 0 {
+		direction = rand.Intn(4)
+	} else {
+		direction = a.direction
+	}
+
 	switch direction {
 	case 0:
 		dx = a.gridSize
