@@ -13,6 +13,7 @@ type Ant struct {
 	windowHeight int32
 	gridSize     int32
 	direction    int
+	nextColor    sdl.Color
 }
 
 type point struct {
@@ -29,10 +30,11 @@ func NewAnt(renderer *sdl.Renderer, windowWidth, windowHeight, gridSize int32) *
 		windowHeight: windowHeight,
 		gridSize:     gridSize,
 		direction:    0,
+		nextColor:    sdl.Color{0, 0, 0, 255},
 	}
 }
 
-func (a *Ant) Update() {
+func (a *Ant) Update(ants []*Ant, visitedGrid map[point]sdl.Color) {
 	dx := int32(0)
 	dy := int32(0)
 
@@ -59,8 +61,29 @@ func (a *Ant) Update() {
 
 	a.direction = direction
 
-	a.pointX += dx
-	a.pointY += dy
+	nextPosX := a.pointX + dx
+	nextPosY := a.pointY + dy
+
+	// Spotkanie z inna mrowka
+	for _, a := range ants {
+		if a.pointX == nextPosX && a.pointY == nextPosY {
+			a.nextColor = sdl.Color{255, 255, 255, 255}
+			nextPosX = a.pointX - dx
+			nextPosY = a.pointY - dy
+			break
+		}
+	}
+
+	// Kolorki sladow
+	for p, color := range visitedGrid {
+		if a.pointX == p.x && a.pointY == p.y {
+			a.nextColor = color
+			break
+		}
+	}
+
+	a.pointX = nextPosX
+	a.pointY = nextPosY
 
 	a.checkWalls()
 }

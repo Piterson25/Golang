@@ -16,13 +16,13 @@ func NewManager() *AntsManager {
 
 func (am *AntsManager) AddAnts(renderer *sdl.Renderer, width, height, X int) {
 	for i := 0; i < X; i++ {
-		am.ants = append(am.ants, NewAnt(renderer, int32(width), int32(height), 30))
+		am.ants = append(am.ants, NewAnt(renderer, int32(width), int32(height), 10))
 	}
 }
 
 func (am *AntsManager) Update() {
 	for _, a := range am.ants {
-		a.Update()
+		a.Update(am.ants, am.visitedGrid)
 		p, color := a.markVisited(a.pointX, a.pointY, a.direction)
 		am.visitedGrid[p] = color
 	}

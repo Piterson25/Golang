@@ -11,7 +11,7 @@ import (
 
 const (
 	WindowTitle      = "ANTS"
-	FPS              = 1000
+	FPS              = 60
 	WindowTitleDelay = time.Second / FPS
 )
 
@@ -86,19 +86,21 @@ func parseArguments(args []string) (int, int, int) {
 	for i := 1; i < len(args); i++ {
 		arg := args[i]
 
-		if i+1 < len(args) {
-			if arg == "-w" {
-				if w, err := parseInt(args[i+1]); err == nil {
-					width = w
-				}
-			} else if arg == "-h" {
-				if h, err := parseInt(args[i+1]); err == nil {
-					height = h
-				}
-			} else if arg == "-count" {
-				if x, err := parseInt(args[i+1]); err == nil {
-					X = x
-				}
+		if i+1 >= len(args) {
+			continue
+		}
+
+		if arg == "-w" {
+			if w, err := parseInt(args[i+1]); err == nil {
+				width = w
+			}
+		} else if arg == "-h" {
+			if h, err := parseInt(args[i+1]); err == nil {
+				height = h
+			}
+		} else if arg == "-count" {
+			if x, err := parseInt(args[i+1]); err == nil {
+				X = x
 			}
 		}
 
